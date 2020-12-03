@@ -1,7 +1,7 @@
 {
-	"name": "ClassNameHere",
+	"name": "CatchUserSync",
 
-	"namespace": "Stanford\\ClassNameHere",
+	"namespace": "Stanford\\CatchUserSync",
 
 	"description": "A template for a REDCap External Module",
 
@@ -16,16 +16,17 @@
 	],
 
 	"permissions": [
-		"redcap_module_system_enable",
-		"redcap_module_project_enable",
-		"redcap_module_save_configuration"
 	],
-	
-	"enable-every-page-hooks-on-system-pages": false,	
+
+	"enable-every-page-hooks-on-system-pages": false,
 
 	"links": {
 		"project": [
-
+            {
+                "name": "Test",
+                "icon": "gear",
+                "url": "test.php"
+            }
 		],
 		"control-center": [
 
@@ -37,6 +38,42 @@
 	],
 
 	"project-settings": [
+        {
+            "key": "api-url",
+            "name": "<b>API Url</b><br>The API Url for the REDCap project where data will be sync'd",
+            "required": true,
+            "type": "text"
+        },
+        {
+            "key": "api-token",
+            "name": "<b>API Token</b>",
+            "required": true,
+            "type": "text"
+        },
+        {
+            "key": "db-url",
+            "name": "<b>DB Url</b>",
+            "required": true,
+            "type": "text"
+        },
+        {
+            "key": "db-name",
+            "name": "<b>DB Name</b>",
+            "required": true,
+            "type": "text"
+        },
+        {
+            "key": "db-user",
+            "name": "<b>DB User</b>",
+            "required": true,
+            "type": "text"
+        },
+        {
+            "key": "db-password",
+            "name": "<b>DB Password</b>",
+            "required": true,
+            "type": "text"
+        },
 		{
 			"key": "enable-project-debug-logging",
 			"name": "<b>Enable Debug Logging</b><br><i>(optional)</i> Requires installation and configuration of emLogger",
