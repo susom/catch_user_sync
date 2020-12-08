@@ -7,6 +7,8 @@
 
 	"documentation": "README.md",
 
+    "framework-version": 4,
+
 	"authors": [
 		{
 			"name": "Andrew Martin",
@@ -17,6 +19,10 @@
 
 	"permissions": [
 	],
+
+    "no-auth-pages": [
+        "cronSync"
+    ],
 
 	"enable-every-page-hooks-on-system-pages": false,
 
@@ -32,10 +38,6 @@
 
 		]
 	},
-
-	"no-auth-pages": [
-
-	],
 
 	"project-settings": [
         {
@@ -82,6 +84,15 @@
 		}
 	],
 
+    "crons": [
+        {
+            "cron_name": "cron-sync",
+            "cron_description": "Cron to update REDCap from CATCH Users",
+            "method": "cronSync",
+            "cron_frequency": "3600",
+            "cron_max_run_time": "180"
+        }
+    ],
 
 	"system-settings": [
 		{

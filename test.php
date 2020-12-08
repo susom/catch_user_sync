@@ -3,107 +3,68 @@ namespace Stanford\CatchUserSync;
 /** @var CatchUserSync $module */
 
 
-
-$module->initialize();
-$module->connect();
-$conn = $module->getConn();
-
-
-//
-//
-//
-// use \PDO;
-// use \PDOException;
-//
-$module->emDebug("On Test", $conn);
-//
-// echo "Hello";
-//
-// $serverName = "prodcatch-ondemand.sql.azuresynapse.net";
-// $database   = "catch_v1";
-// $username   = "ShcConnector";
-// $password   = 'ubqU8gd30gmlZ75jT$p4';
-//
-//
-// try {
-//     $conn = new PDO(
-//       "sqlsrv:server = tcp:$serverName,1433; Database = $database",
-//       $username, $password);
-//
-//     $conn->setAttribute(
-//         PDO::ATTR_ERRMODE,
-//         PDO::ERRMODE_EXCEPTION );
-// } catch ( PDOException $e ) {
-//     $module->emDebug("Exception", $e);
-//     print( "Error connecting to SQL Server." );
-//     die(print_r($e));
-// }
-
-// $sql = "select participantId, cell, firstName, lastName, email from participants";
-$sql = "select top 10 participantId, cell, firstName, lastName, email from participants";
-$query = $conn->prepare($sql);
-$query->execute();
-
-$payload = [];
-while ($row = $query->fetch(\PDO::FETCH_ASSOC)) {
-    $record = [
-        "record_id" => $row['participantId'],
-        "email" => $row['email'],
-        "phone" => $row['cell']
-    ];
-
-    $module->emDebug($row);
-};
-
-
-
-
-
+$module->updateREDCapFromSql();
 
 exit();
 
 
-$sql = "select top 10 * from participants";
-
-$connectionOptions = array(
-    "Database" => "catch_v1", // update me
-    "UID" => "ShcConnector", // update me
-    "PWD" => 'ubqU8gd30gmlZ75jT$p4' // update me
-);
+$module->initialize();
 
 
-// $connectionInfo = array("UID" => "{your_user_name}", "pwd" => "{your_password_here}",
-//     "Database" => "{your_database}", "LoginTimeout" => 30, "Encrypt" => 1, "TrustServerCertificate" => 0);
-// $serverName = "tcp:{your_server}.sql.azuresynapse.net,1433";
-// $conn = sqlsrv_connect($serverName, $connectionInfo);
+// Load current REDCap Data
+$module->loadRcData();
+$module->emDebug(count($module->rcData) . " REDCap records loaded");
+// $module->emDebug($module->rcData);
 
 
+$module->connect();
+$conn = $module->getConn();
+$sql = "select participantId, cell, firstName, lastName, email from participants";
+// $sql = "select top 10 participantId, cell, firstName, lastName, email from participants";
 
-//Establishes the connection
-$conn = sqlsrv_connect($serverName, $connectionOptions);
-$params = [];
-$options = [];
+$query = $conn->prepare($sql);
+$query->execute();
 
-$sql = "select participantId from participants";
-$stmt = sqlsrv_query($conn, $sql, $params, $options);
+$payload = [];
+$rowCount = 0;
+while ($row = $query->fetch(\PDO::FETCH_ASSOC)) {
+    $rowCount++;
+    $rowHash = md5(serialize($row));
+    // $module->emDebug("Hash: " . $rowHash);
 
-if ($stmt === false) {
-    $module->emDebug(sqlsrv_errors());
-} else {
+    $record_id = $row['participantId'];
 
-    $module->emDebug("Rows", sqlsrv_num_rows());
+    if (isset($module->rcData[$record_id])
+        && $rowHash == $module->rcData[$record_id]) {
+        // Same
+        // $module->emDebug('skipping');
+        continue;
+    }
 
+    $payload[] = [
+        "record_id" => $record_id,
+        "email" => $row['email'],
+        "phone" => $row['cell'],
+        "first_name" => $row['firstName'],
+        "last_name" => $row['lastName'],
+        "hash" => $rowHash
+    ];
 }
 
-// echo("\n\nReading data from table" . PHP_EOL);
-//
-// $module->emDebug($getResults, sqlsrv_errors());
-//
-// if ($getResults == FALSE)
-//     echo(sqlsrv_errors());
-// while ($row = sqlsrv_fetch_array($getResults, SQLSRV_FETCH_ASSOC)) {
-//     echo($row['participantId'] . " " . PHP_EOL);
-// }
-sqlsrv_free_stmt($stmt);
+$module->emDebug(count($payload) . " updates to REDCap from $rowCount CATCH Users");
+
+if (count($payload)) {
+    // Update REDCap
+    $module->emDebug("Save:", $module->rc->importRecords($payload));
+}
 
 
+
+
+
+
+
+
+
+
+print "Done";
