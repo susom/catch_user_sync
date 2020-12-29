@@ -101,16 +101,22 @@ class CatchUserSync extends \ExternalModules\AbstractExternalModule {
      */
     public function cronSync($cron) {
         // $this->framework->runPageInPageInProjectContextOnEnabledProjects("cronSync.php");
-        foreach($this->framework->getProjectsWithModuleEnabled() as $localProjectId) {
+        $projects = $this->framework->getProjectsWithModuleEnabled();
+        foreach($projects as $localProjectId) {
             $_GET['pid'] = $localProjectId;
             $url = $this->getUrl("cronSync.php",true, false);
-            $this->emDebug("Setting pid to $localProjectId", $url);
+            $this->emDebug("Starting " . __METHOD__ . " on PID $localProjectId of " . count($projects) . " projects in pid: " . getmypid());
 
-            $client = new \GuzzleHttp\Client;
-            $response = $client->request('GET', $url, [
-                \GuzzleHttp\RequestOptions::SYNCHRONOUS => true
-            ]);
-            $this->emDebug("Response", $response->getStatusCode(), $response->getContents());
+            try {
+                $client = new \GuzzleHttp\Client;
+                $response = $client->request('GET', $url, [
+                    \GuzzleHttp\RequestOptions::SYNCHRONOUS => true
+                ]);
+                // $this->emDebug("Response", $response->getStatusCode(), $response->getContents());
+            } catch (\Exception $e) {
+                $this->emDebug("Exception thrown in guzzle check: " . $e->getMessage());
+            }
+            return true;
         }
     }
 
@@ -131,7 +137,7 @@ class CatchUserSync extends \ExternalModules\AbstractExternalModule {
         // Make SQL Query
         $this->connect();
         $conn = $this->getConn();
-        $sql = "select participantId, cell, firstName, lastName, email from participants";
+        $sql = "select participantId, cell, firstName, lastName, email from users";
         // $sql = "select top 10 participantId, cell, firstName, lastName, email from participants";
         $query = $conn->prepare($sql);
         $query->execute();
@@ -177,6 +183,10 @@ class CatchUserSync extends \ExternalModules\AbstractExternalModule {
 
         print "<pre>" . implode("\n",$msgs) . "</pre>";
     }
+
+
+    
+
 
 
 
